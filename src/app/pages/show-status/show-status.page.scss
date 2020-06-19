@@ -1,0 +1,28 @@
+.progress {
+    background: rgba(255, 255, 255, 0.5);
+    height: 3px;
+    margin-top: 3px;
+}
+.bar {
+    height: 3px;
+    width: 0%;
+    background-color: white;
+}
+.item-md.item-block .item-inner {
+    border-bottom: 0 !important;
+}
+ion-label > span {
+    display: block;
+    line-height: 24px;
+}
+img.header {
+    border-radius: 50%;
+}
+
+ion-toolbar {
+    --background: #000;
+}
+
+ion-content {
+    --background: #000000;
+}

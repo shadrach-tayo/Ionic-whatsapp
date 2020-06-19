@@ -1,0 +1,31 @@
+<ion-header class="ion-no-border" no-border>
+  <div class="progress">
+    <!-- <div class="bar" id="myBar"></div> -->
+    <ion-progress-bar type="indeterminate" value="100%"></ion-progress-bar>
+  </div>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button></ion-back-button>
+    </ion-buttons>
+    <ion-thumbnail slot="start" style="margin: 5px;">
+      <img class="header" src="assets/person_pagas.jpg" (click)="viewInfo()">
+    </ion-thumbnail>
+    <span style="font-size: 17px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    letter-spacing: 0.3px;
+    overflow: hidden;
+    white-space: nowrap;
+    display: block;">
+      Abubakar Pagas
+    </span>
+    <span id="UserStatus">2:000</span>
+
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div style="height:15%;"></div>
+  <img style="width:100%;" src="assets/person_pagas.jpg" imageViewer />
+  <div style="height:15%;"></div>
+</ion-content>

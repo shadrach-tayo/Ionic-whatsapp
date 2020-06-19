@@ -1,0 +1,23 @@
+<ion-content class="ion-margin">
+  <ion-list>
+    <ion-item lines="none" *ngIf="tabs === 'chat'" (click)="newGroup()">
+      New group
+    </ion-item>
+    <ion-item lines="none" *ngIf="tabs === 'chat'">
+      New broadcast
+    </ion-item>
+    <ion-item lines="none" *ngIf="tabs === 'chat'">
+      WhatsApp Web
+    </ion-item>
+    <ion-item lines="none" *ngIf="tabs === 'status'">
+      Status privacy
+    </ion-item>
+    <ion-item lines="none" *ngIf="tabs === 'calls'">
+      Clear call log
+    </ion-item>
+    <ion-item lines="none" (click)="settings()">
+      Settings
+    </ion-item>
+
+  </ion-list>
+</ion-content>
