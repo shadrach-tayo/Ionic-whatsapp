@@ -1,3 +1,4 @@
+import { AngularFireDatabase } from '@angular/fire/database';
 import { LoadingService } from './../../services/loading.service';
 import { Component, OnInit } from '@angular/core';
 import { Camera, CameraOptions } from '@ionic-native/camera/ngx';
@@ -18,6 +19,7 @@ export class CameraPage implements OnInit {
     private camera: Camera,
     private loading: LoadingService,
     private afstorage: AngularFireStorage,
+    public angularDb: AngularFireDatabase
 
   ) {
     this.cameraStatus = {
@@ -35,16 +37,18 @@ export class CameraPage implements OnInit {
 
   }
 
+  // selete from the gallery part
   galleryOption() {
     this.uploadPhotoStatus(this.camera.PictureSourceType.PHOTOLIBRARY).then((url) => {
-
+      this.send(url)
     })
 
   }
 
+  // selete from the camera part
   cameraOption() {
     this.uploadPhotoStatus(this.camera.PictureSourceType.CAMERA).then((url) => {
-
+      this.send(url)
     })
 
   }
@@ -53,7 +57,7 @@ export class CameraPage implements OnInit {
   // it handle the selection from the image after will be upload to firebase storage 
   // also will be return the download url
   uploadPhotoStatus(sourceType) {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       this.cameraStatus.sourceType = sourceType;
       this.camera.getPicture(this.cameraStatus).then((imageData) => {
         let url = "data:image/jpeg;base64," + imageData;
@@ -76,7 +80,7 @@ export class CameraPage implements OnInit {
     })
   }
 
-
+  // set the random name
   generateFilename() {
     var length = 8;
     var text = "";
@@ -87,6 +91,7 @@ export class CameraPage implements OnInit {
     return text + ".jpg";
   }
 
+  //reduce the quality of the image
   imgURItoBlob(dataURI) {
     var binary = atob(dataURI.split(',')[1]);
     var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
@@ -97,6 +102,25 @@ export class CameraPage implements OnInit {
     return new Blob([new Uint8Array(array)], {
       type: mimeString
     });
+  }
+
+  // post the story 
+  send(url) {
+    var promise = new Promise((resolve) => {
+      this.angularDb.database.ref('/story').push({
+        date: new Date().toString(),
+        postBy: firebase.auth().currentUser.uid,
+        image: url
+      }).then((success) => {
+        resolve(true);
+        let timelineId = success.key;
+        success.update({
+          key: timelineId
+        })
+        this.loading.hidePro();
+      })
+    })
+    return promise
   }
 
 }

@@ -221,8 +221,6 @@ ion-fab-button {
 
 /* Conversation */
 
-
-
 .contentBg {
     // --background: #ffffff;
     padding-bottom: 0 !important;
@@ -312,107 +310,7 @@ ion-fab-button {
         }
     }
 }
-.message-left {
-    .msg-content {
-        float: left;
-        position: relative;
-        background: #ffffff;
-        font-weight: bold;
-        //background: rgba(37, 61, 99, 0.8);
-        color: #000;
-        font-family: sans-serif;
-        :before {
-            content: "";
-            position: absolute;
-            background: transparent;
-            width: 10px;
-            height: 8px;
-            left: -10px;
-            top: 6px;
-            box-sizing: border-box;
-            border-right: 10px solid #ffffff;
-            // border-right: 10px solid rgba(37, 61, 99, 0.8);
-            border-top: 8px solid transparent;
-            border-bottom: 8px solid transparent;
-        }
-    }
 
-    .msg-detail {
-        padding-left: 22px;
-    }
-    .user-img {
-        left: 0;
-        z-index: 9999;
-        border: 2px solid #fff;
-    }
-}
-.message-right {
-    .msg-detail {
-        // padding-right: 60px;
-        .msg-info {
-            text-align: right;
-        }
-    }
-    .user-img {
-        right: 0;
-        border: 2px solid #fff;
-    }
-    .msg-content {
-        float: right;
-        color: #000;
-        font-weight: bold;
-        background: #e1ffc7;
-        font-family: sans-serif;
-        :before {
-            content: "";
-            position: absolute;
-            background: transparent;
-            width: 10px;
-            height: 8px;
-            right: -10px;
-            top: 6px;
-            box-sizing: border-box;
-            border-left: 10px solid #e1ffc7;
-            // border-right: 10px solid rgba(37, 61, 99, 0.8);
-            border-top: 8px solid transparent;
-            border-bottom: 8px solid transparent;
-        }
-    }
-}
-.tick {
-    display: inline-block;
-    margin-left: 2px;
-    position: relative;
-    top: 4px;
-    height: 16px;
-    width: 16px;
-}
-
-.tick svg {
-    position: absolute;
-    transition: 0.5s ease-in-out;
-}
-
-.tick svg:first-child {
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-    -webkit-transform: perspective(800px) rotateY(180deg);
-    transform: perspective(800px) rotateY(180deg);
-}
-
-.tick svg:last-child {
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-    -webkit-transform: perspective(800px) rotateY(0deg);
-    transform: perspective(800px) rotateY(0deg);
-}
-
-.tick-animation svg:first-child {
-    -webkit-transform: perspective(800px) rotateY(0);
-    transform: perspective(800px) rotateY(0);
-}
-
-.tick-animation svg:last-child {
-    -webkit-transform: perspective(800px) rotateY(-179.9deg);
-    transform: perspective(800px) rotateY(-179.9deg);
+ion-icon {
+    font-size: x-large;
 }

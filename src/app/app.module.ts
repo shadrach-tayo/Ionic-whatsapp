@@ -1,3 +1,7 @@
+import { BroadcastComponent } from './component/broadcast/broadcast.component';
+import { AudioService } from './services/audio.service';
+import { WebrtcService } from './services/webrtc.service';
+import { GroupoptComponent } from './component/groupopt/groupopt.component';
 import { ImageService } from './services/image.service';
 import { UserService } from './services/user.service';
 import { ChatmoreComponent } from './component/chatmore/chatmore.component';
@@ -10,7 +14,7 @@ import { AlertService } from './services/alert.service';
 import { PhoneService } from './services/phone.service';
 import { SettingComponent } from './component/setting/setting.component';
 import { CameraPageModule } from './pages/camera/camera.module';
-import { NgModule } from '@angular/core';
+import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { RouteReuseStrategy } from '@angular/router';
 
@@ -36,8 +40,8 @@ import { AngularFireStorageModule } from '@angular/fire/storage';
 import { environment } from '../environments/environment.prod';
 import * as firebase from 'firebase';
 import { DataService } from './services/data.service';
-// import { FirebaseX } from "@ionic-native/firebase-x/ngx";
 import { Camera } from '@ionic-native/camera/ngx';
+import { NativeAudio } from '@ionic-native/native-audio/ngx';
 import { Network } from '@ionic-native/network/ngx';
 import { SocialSharing } from '@ionic-native/social-sharing/ngx';
 import { IonicHeaderParallaxModule } from 'ionic-header-parallax';
@@ -46,11 +50,18 @@ import { File } from '@ionic-native/file/ngx';
 import { FileOpener } from '@ionic-native/file-opener/ngx';
 import { FilePath } from '@ionic-native/file-path/ngx';
 import { FileChooser } from '@ionic-native/file-chooser/ngx';
+import { Base64 } from '@ionic-native/base64/ngx';
+import { StreamingMedia } from '@ionic-native/streaming-media/ngx';
+// import Peer from 'peerjs';
+import { CallNumber } from '@ionic-native/call-number/ngx';
+
+
+
 
 // for the camera site user to be provider
 firebase.initializeApp(environment.firebaseConfig)
 @NgModule({
-  declarations: [AppComponent, SettingComponent, ChatmoreComponent],
+  declarations: [AppComponent, SettingComponent, ChatmoreComponent, GroupoptComponent, BroadcastComponent],
   entryComponents: [],
   imports: [
     AngularFireModule.initializeApp(environment.firebaseConfig),
@@ -74,10 +85,17 @@ firebase.initializeApp(environment.firebaseConfig)
     PhoneService,
     AlertService,
     LoginService,
+    WebrtcService,
+    AudioService,
+    // Peer,
     UserService,
+    Base64,
     ChatService,
     Media,
+    NativeAudio,
+    CallNumber,
     File,
+    StreamingMedia,
     ImageService,
     FileChooser,
     FilePath,
@@ -94,6 +112,7 @@ firebase.initializeApp(environment.firebaseConfig)
     SuperTabs,
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy }
   ],
+  schemas: [ CUSTOM_ELEMENTS_SCHEMA],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

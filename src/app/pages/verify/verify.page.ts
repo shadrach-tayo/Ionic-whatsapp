@@ -130,8 +130,8 @@ export class VerifyPage implements OnInit {
     return text + ".jpg";
   }
 
-   //for update the profile picture 
-   async profilePictureCamera() {
+  //for update the profile picture 
+  async profilePictureCamera() {
     const option: CameraOptions = {
       quality: 100,
       targetHeight: 530,
@@ -143,6 +143,8 @@ export class VerifyPage implements OnInit {
       allowEdit: true
     }
     try {
+      // this handle the upload to the firebase 
+      // it handle the selection from the image after will be upload to firebase storage 
       this.camera.getPicture(option).then((imageData) => {
         this.loading.showPro()
         let url = "data:image/jpeg;base64," + imageData;
@@ -184,6 +186,8 @@ export class VerifyPage implements OnInit {
       allowEdit: true
     }
     try {
+      // this handle the upload to the firebase 
+      // it handle the selection from the image after will be upload to firebase storage 
       this.camera.getPicture(option).then((imageData) => {
         this.loading.showPro()
         let url = "data:image/jpeg;base64," + imageData;
@@ -191,7 +195,6 @@ export class VerifyPage implements OnInit {
         let metadata = {
           'contentType': imgBlob.type
         };
-
         const ref = this.afstorage.ref('/myProfile/' + firebase.auth().currentUser.uid + this.generateFilename())
         const task = ref.put(imgBlob, metadata)
         //this will be delete for ther existing one

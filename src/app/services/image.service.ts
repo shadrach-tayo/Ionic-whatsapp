@@ -35,17 +35,17 @@ export class ImageService {
     }
   }
 
-  setGroupPhotoProfile(group, sourceType) {
+  setGroupPhotoProfile(groupId, sourceType) {
     return new Promise((resolve, reject) => {
       this.groupPhotoOption.sourceType = sourceType;
-      this.loading.showPro();
       this.camera.getPicture(this.groupPhotoOption).then((imageData) => {
         let url = "data:image/jpeg;base64," + imageData;
         let imgBlob = this.imgURItoBlob(url);
         let metadata = {
           'contentType': imgBlob.type
         };
-        const ref = this.afstorage.ref('/groupsMessage/' + group + this.generateFilename())
+        this.loading.showPro();
+        const ref = this.afstorage.ref('/groupsMessage/' + groupId + this.generateFilename())
         const task = ref.put(imgBlob, metadata)
         task.snapshotChanges().pipe(
           finalize(async () => {
@@ -60,21 +60,21 @@ export class ImageService {
 
     })
   }
-  setGroupPhoto(group, sourceType) {
+  setGroupPhoto(groupId, sourceType) {
     this.groupPhotoOption.sourceType = sourceType;
-    this.loading.showPro();
     this.camera.getPicture(this.groupPhotoOption).then((imageData) => {
       let url = "data:image/jpeg;base64," + imageData;
       let imgBlob = this.imgURItoBlob(url);
       let metadata = {
         'contentType': imgBlob.type
       };
+      this.loading.showPro();
       const ref = this.afstorage.ref('/groups/' + this.generateFilename())
       const task = ref.put(imgBlob, metadata)
       task.snapshotChanges().pipe(
         finalize(async () => {
           ref.getDownloadURL().subscribe((url) => {
-            group.img = url;
+            groupId.img = url;
             this.loading.hidePro();
             this.showAlert('Photo', 'Your profile groups has been updated')
           })

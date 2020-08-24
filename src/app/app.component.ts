@@ -1,3 +1,4 @@
+import { StatusService } from './services/status.service';
 import { Component } from '@angular/core';
 
 import { Platform } from '@ionic/angular';
@@ -15,7 +16,8 @@ export class AppComponent {
   constructor(
     private platform: Platform,
     private splashScreen: SplashScreen,
-    private statusBar: StatusBar
+    private statusBar: StatusBar,
+    public statusService: StatusService
   ) {
     this.initializeApp();
     this.darkMode = window.localStorage.getItem('dark');
@@ -24,10 +26,10 @@ export class AppComponent {
 
   initializeApp() {
     this.platform.ready().then(() => {
-      // this.statusBar.styleDefault();
-      this.statusBar.backgroundColorByHexString('#054D44');
-      // this.checkDarkTheme()
+      this.checkDarkTheme()
       this.splashScreen.hide();
+      this.statusService.offlineStatus();
+
     });
   }
 
@@ -35,10 +37,10 @@ export class AppComponent {
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
     if (prefersDark.matches) {
       document.body.classList.toggle('dark');
-      this.statusBar.backgroundColorByHexString('#0F1D24');
+      this.statusBar.styleBlackTranslucent();
     } else if (this.darkMode) {
       document.body.classList.toggle('dark');
-      this.statusBar.backgroundColorByHexString('#0F1D24');
+      this.statusBar.styleBlackTranslucent();
     } else {
       this.statusBar.styleLightContent();
       this.statusBar.backgroundColorByHexString('#054D44');

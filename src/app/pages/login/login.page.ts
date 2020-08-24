@@ -66,6 +66,8 @@ export class LoginPage implements OnInit {
       }
     })
   }
+
+  // proceed to the next step
   async next() {
     this.loading.show()
     this.af.signInWithPhoneNumber(this.phoneNumber, this.recaptchaVerifier).then((result) => {
@@ -83,6 +85,7 @@ export class LoginPage implements OnInit {
 
   }
 
+  // init the comfrim the code verification code
   initia() {
     this.loading.show()
     this.comfirmationResult.confirm(this.otp).then(() => {
@@ -96,10 +99,12 @@ export class LoginPage implements OnInit {
 
   }
 
+  // clear
   clear() {
     this.otpSent = false;
   }
 
+  // Alert to comfirm the number
   async presentAlertConfirm() {
     const alert = await this.alert.create({
       message: 'We will be verifying the phone' +

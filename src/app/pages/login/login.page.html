@@ -15,7 +15,8 @@
             <div class="input">
                 <form [formGroup]="phone">
                     <ion-item lines="none" style="text-align: center;">
-                        <ion-input [(ngModel)]="phoneNumber" type="text" formControlName="inputNumber" placeholder="e.g +2348034524290"></ion-input>
+                        <ion-input [(ngModel)]="phoneNumber" type="text" formControlName="inputNumber"
+                            placeholder="e.g +2348034524290"></ion-input>
                     </ion-item>
                 </form>
 
@@ -29,7 +30,7 @@
         </div>
 
         <div class="button">
-            <ion-button expand="block" (click)="presentAlertConfirm()"  [disabled]="!phone.valid">
+            <ion-button expand="block" (click)="presentAlertConfirm()" [disabled]="!phone.valid">
                 NEXT
             </ion-button>
         </div>

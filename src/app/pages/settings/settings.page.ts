@@ -23,18 +23,20 @@ export class SettingsPage implements OnInit {
   ) { }
 
   ngOnInit() {
-    this.dataService.getCurrentUser(firebase.auth().currentUser.uid).valueChanges().subscribe((user) =>{  
+    this.dataService.getCurrentUser(firebase.auth().currentUser.uid).valueChanges().subscribe((user) => {
       this.nikeName = user.nikeName;
       this.image = user.img
       this.description = user.description;
     })
-    
+
   }
 
-  profile(){
+  //Route to Profile page
+  profile() {
     this.router.navigateByUrl('/profile')
   }
 
+  // Route to ACccount
   account() {
     this.router.navigateByUrl('/account')
   }
@@ -57,11 +59,13 @@ export class SettingsPage implements OnInit {
     toast.present();
   }
 
-  help(){
+  // Route to hlep
+  help() {
     this.router.navigateByUrl("/help")
   }
 
-  back(){
+  //Pop Back button
+  back() {
     this.navCtrl.pop();
   }
 }

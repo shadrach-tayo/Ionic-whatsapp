@@ -11,7 +11,6 @@ import * as firebase from 'firebase';
   providedIn: 'root'
 })
 export class AuthGuard implements CanActivate {
-  hasVerifiedEmail
 
   constructor(
     private afAuth: AngularFireAuth,
@@ -19,6 +18,8 @@ export class AuthGuard implements CanActivate {
     private router: Router,
 
   ) { }
+  // this methode handle when user already login will be able to navigate to home page
+  // if not navigate to welcome pages
   canActivate(
     next: ActivatedRouteSnapshot,
     state: RouterStateSnapshot): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {

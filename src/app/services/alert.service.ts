@@ -45,8 +45,39 @@ const errorMessages = {
   exceeded: {
     header: "EXCEEDED",
     messages: "The phone verification quota for this project has been exceeded."
+  },
+   // Group Error Messages
+   groupUpdate: {
+    header: "Update Group Failed!",
+    message: "Sorry, but we've encountered an error updating this group."
+  },
+  groupLeave: {
+    header: "Leave Group Failed!",
+    message: "Sorry, but you've encountered an error leaving this group."
+  },
+  groupDelete: {
+    header: "Delete Group Failed!",
+    message: "Sorry, but we've encountered an error deleting this group."
+  },
+  updateProfile: {
+    header: "Update Profile Failed",
+    message: "Sorry, but we'va encountered an error updating your profile. "
+  },
+
+};
+
+const successMessages = {
+
+  groupUpdated: {
+    header: "Group Updated!",
+    message: "This group has been successfully updated!"
+  },
+  groupLeft: {
+    header: "Leave Group",
+    message: "You have successfully left this group."
   }
-}
+
+};
 
 
 @Injectable({
@@ -147,9 +178,55 @@ export class AlertService {
         })
         this.toast.present();
         break;
+      case "group/error-update-group":
+        this.alert = await this.alertCtrl.create({
+          header: errorMessages.groupUpdate["header"],
+          message: errorMessages.groupUpdate["message"],
+          buttons: ["Ok"],
+        });
+        this.alert.present();
+        break;
+
+      case "group/error-leave-group":
+        this.alert = await this.alertCtrl.create({
+          header: errorMessages.groupLeave["header"],
+          message: errorMessages.groupLeave["message"],
+          buttons: ["Ok"],
+        });
+        this.alert.present();
+        break;
+
+      case "group/error-delete-group":
+        this.alert = await this.alertCtrl.create({
+          header: errorMessages.groupDelete["header"],
+          message: errorMessages.groupDelete["message"],
+          buttons: ["OK"],
+        });
+        this.alert.present();
+        break;
 
 
     }
 
+  }
+
+  //show alert 
+  async showAlert(header, message) {
+    const alert = await this.alertCtrl.create({
+      header: header,
+      message: message,
+      buttons: ["OK"],
+    })
+    await alert.present();
+  }
+
+  // show group updated
+  async showGroupUpdatedMessage() {
+    const alert = await this.alertCtrl.create({
+      header: successMessages.groupUpdated["header"],
+      message: successMessages.groupUpdated["message"],
+      buttons: ["OK"],
+    });
+    await alert.present();
   }
 }

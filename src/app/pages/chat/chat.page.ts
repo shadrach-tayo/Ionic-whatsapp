@@ -1,3 +1,4 @@
+import { StatusService } from './../../services/status.service';
 import { Router } from '@angular/router';
 import { Component, OnInit, NgZone } from '@angular/core';
 import { AlertService } from '../../services/alert.service';
@@ -6,8 +7,10 @@ import { LoadingService } from '../../services/loading.service';
 import { ChatService } from '../../services/chat.service';
 import { AngularFireDatabase } from '@angular/fire/database';
 import { DataService } from '../../services/data.service';
-import { ToastController } from '@ionic/angular';
+import { ToastController, Platform } from '@ionic/angular';
 import * as firebase from 'firebase';
+import { Network } from '@ionic-native/network/ngx';
+
 
 @Component({
   selector: 'app-chat',
@@ -16,7 +19,7 @@ import * as firebase from 'firebase';
 })
 export class ChatPage implements OnInit {
 
-  Conversations = [];
+  Conversations = [].reverse();
   allUser = [];
   isLoading = true;
   userList: any;
@@ -29,43 +32,43 @@ export class ChatPage implements OnInit {
   private subscription: any;
   groups: any;
 
-
+  img = 'assets/profile.png';
 
   constructor(
     private router: Router,
     public alertService: AlertService,
-    // public events: Events,
     public events: EventService,
     public ngZone: NgZone,
     public loading: LoadingService,
     public chatService: ChatService,
     public afDB: AngularFireDatabase,
     public dataService: DataService,
-    private toast: ToastController
+    private toast: ToastController,
+    private network: Network,
+    private platform: Platform,
+    public statusService: StatusService
   ) {
-    // this.currentUserId = firebase.auth().currentUser.uid;
-    // //let invoke the parameter from the chatService 
-    // this.events.subscribe('conversations', () => {
-    //   this.ngZone.run(() => {
-    //     this.Conversations = this.chatService.Conversations;
-    //     this.allUser = this.chatService.boddyUser;
-    //     this.lenght = this.chatService.lenght;
-    //     this.isLoading = false;
-    //     console.log(this.lenght)
-    //   })
-    // })
-
+    this.currentUserId = firebase.auth().currentUser.uid
+    // calling the connetion to invoke 
+    this.connection();
+    // when the platform is ready
+    this.platform.ready().then(() => {
+      // this handle the  online methode or offline
+      this.statusService.onlineStatus();
+    });
   }
 
   ngOnInit() {
+    // initialized the view message conversation and group and broadcast 
     this.viewMessaging()
-
     //get the conversations length
     this.dataService.conversation(firebase.auth().currentUser.uid).valueChanges().subscribe((lengths) => {
       this.conversations = lengths;
       this.isLoading = false;
+
     })
     this.dataService.getUsers().valueChanges().subscribe((userlist) => {
+      // slipe the maximun length to view
       this.userList = userlist.slice(0, 5)
     })
 
@@ -86,17 +89,47 @@ export class ChatPage implements OnInit {
     this.events.subscribe('conversations', () => { })
   }
 
+  // when view did enter 
   ionViewDidEnter() {
     // this will initial the conversation item for the list
-    // this.chatService.getConversations()
+    this.viewMessaging()
   }
 
+  // set the connection when the data offline   
+  connection() {
+    let disconnectSubscription = this.network.onDisconnect().subscribe(() => {
+      this.statusService.offlineStatusLog();
+    });
+    disconnectSubscription.unsubscribe
+    let connectSubscription = this.network.onConnect().subscribe(() => {
+      this.statusService.onlineStatus();
+      setTimeout(() => {
+        if (this.network.type === 'wifi') {
+        }
+      }, 3000);
+    });
+    connectSubscription.unsubscribe();
+  }
+
+
+  // this handle also route to chat module pagas
   doChat(userId) {
+    // if the cuurent user tap route to the profile page
     if (userId === this.currentUserId) {
       this.router.navigateByUrl("/profile")
     } else {
+      // route to chat message
       this.router.navigate(['/do-chat', { 'userId': userId }])
     }
+  }
+  // this handle also route to group chat module pagas
+  groupChat(groupKey) {
+    this.router.navigate(['/group-chat', { 'key': groupKey }])
+  }
+
+  // this handle also route to broadcast chat module pagas
+  broadcast(broadcastKey) {
+    this.router.navigate(['/broadcast', { 'key': broadcastKey }])
   }
 
   // user can navigate form other page//
@@ -117,22 +150,62 @@ export class ChatPage implements OnInit {
   viewMessaging() {
     // let the message  chat bot with the group chat
     this.userId = firebase.auth().currentUser.uid;
-    this.subscription = this.dataService.chat(this.userId).valueChanges().subscribe((groupIds) => {
-      if (groupIds.length) {
-        // let get the length of the group
-        if (this.groups && this.groups.length > groupIds.length) {
-          this.groups = [];
-        }
-        // let make list forEach of item from the list
-        groupIds.forEach((groupId) => {
-          // let get the user database from the firebase 
-          this.dataService.groups(groupId.key).valueChanges().subscribe((data) => {
-            console.log("userData", data)
+    this.dataService.chat(this.userId).valueChanges().subscribe((groupIds) => {
+      this.Conversations = [];
+      // let make list forEach of item from the list
+      groupIds.forEach((groupId) => {
+        let tempData = <any>{};
+        tempData = groupId;
+        this.dataService.getUser(groupId.userId).valueChanges().subscribe((user) => {
+          tempData.nikeName = user.nikeName;
+          tempData.img = user.img;
+          this.dataService.listUnreadStatus(groupId.userId).once('value', snap => {
+            var res = snap.val();
+            let store = Object.keys(res)
+            tempData.unreadMessagesCount = store.length;
           })
         })
-      }
+        // console.log("userDAta", tempData)
+        this.dataService.groups(groupId.key).valueChanges().subscribe((group) => {
+          tempData.groupName = group.name;
+          tempData.groupImage = group.img;
+          tempData.groupKey = group.key;
+          this.dataService.listMessage(groupId.key).valueChanges().subscribe((message) => {
+            let messages = message.slice(-1)[0]
+            tempData.groupMessage = messages.message;
+          })
+          this.dataService.listUnread(groupId.key).valueChanges().subscribe((unread) => {
+            tempData.unreadGroupCount = unread.length;
+            // console.log("num", unread.length)
+          })
+          // console.log("userData", this.groups)
+        });
+        // console.log("Data", tempData)
+        this.Conversations.unshift(tempData);
+      })
+      // }
     })
 
+  }
+
+
+  //Add or update friend data fro real-time sync.
+  addOrUpdategroups(group) {
+    if (!this.groups) {
+      this.groups = [group];
+    } else {
+      var index = -1;
+      for (var i = 0; i < this.groups.length; i++) {
+        if (this.groups[i].key == group.key) {
+          index = i;
+        }
+      }
+      if (index > -1) {
+        this.groups[index] = group;
+      } else {
+        this.groups.push(group);
+      }
+    }
   }
 
 

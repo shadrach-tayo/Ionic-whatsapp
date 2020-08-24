@@ -17,7 +17,7 @@ export class AccountPage implements OnInit {
   ngOnInit() {
   }
 
-  
+
   //pop a notification
   async toastShow() {
     const toast = await this.toast.create({
@@ -28,12 +28,25 @@ export class AccountPage implements OnInit {
     toast.present();
   }
 
-  security(){
+  // router page 
+  security() {
     this.router.navigateByUrl("/security")
   }
 
-  changeNumber(){
+  // router page 
+  changeNumber() {
     this.router.navigateByUrl('/changenumber')
+  }
+
+  // router page 
+  reqestInfo() {
+    this.router.navigateByUrl('/requestinfo')
+  }
+
+  // router page 
+  deleteAccount() {
+    this.router.navigateByUrl('/delete-account')
+
   }
 
 }

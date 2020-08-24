@@ -42,8 +42,8 @@
       <ion-label>
         <div style="float: right;">
           <ion-icon slot="icon-only" color="secondary" (click)="back()" name="chatbox-ellipses"></ion-icon>
-          <ion-icon slot="icon-only" color="secondary" name="call"></ion-icon>
-          <ion-icon slot="icon-only" color="secondary" name="videocam"></ion-icon>
+          <ion-icon slot="icon-only" color="secondary" name="call" (click)="calls()"></ion-icon>
+          <ion-icon slot="icon-only" color="secondary" name="videocam" (click)="videoCall()"></ion-icon>
         </div>
       </ion-label>
     </ion-item>
@@ -60,8 +60,8 @@
       <ion-label>
         <div style="float: right;">
           <ion-icon slot="icon-only" color="secondary" (click)="back()" name="chatbox-ellipses"></ion-icon>
-          <ion-icon slot="icon-only" color="secondary" name="call"></ion-icon>
-          <ion-icon slot="icon-only" color="secondary" name="videocam"></ion-icon>
+          <ion-icon slot="icon-only" color="secondary" name="call" (click)="calls()"></ion-icon>
+          <ion-icon slot="icon-only" color="secondary" name="videocam" (click)="videoCall()"(click)="videoCall()"></ion-icon>
         </div>
       </ion-label>
     </ion-item>

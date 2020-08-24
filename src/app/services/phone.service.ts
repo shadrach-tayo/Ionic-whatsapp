@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import * as firebase from 'firebase';
-import { FirebaseX } from "@ionic-native/firebase-x/ngx";
 
 @Injectable({
   providedIn: 'root'
@@ -8,7 +7,6 @@ import { FirebaseX } from "@ionic-native/firebase-x/ngx";
 export class PhoneService {
 
   constructor(
-    private FireBase: FirebaseX
   ) { }
 
 //   sendSmsVerification(phoneNumber): Promise <firebase.auth.UserCredential> {

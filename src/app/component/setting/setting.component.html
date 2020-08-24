@@ -3,16 +3,16 @@
     <ion-item lines="none" *ngIf="tabs === 'chat'" (click)="newGroup()">
       New group
     </ion-item>
-    <ion-item lines="none" *ngIf="tabs === 'chat'">
+    <ion-item lines="none" *ngIf="tabs === 'chat'" (click)="newBroadCast()">
       New broadcast
     </ion-item>
     <ion-item lines="none" *ngIf="tabs === 'chat'">
       WhatsApp Web
     </ion-item>
-    <ion-item lines="none" *ngIf="tabs === 'status'">
+    <ion-item lines="none" *ngIf="tabs === 'status'" (click)="statusPrivacy()">
       Status privacy
     </ion-item>
-    <ion-item lines="none" *ngIf="tabs === 'calls'">
+    <ion-item lines="none" *ngIf="tabs === 'calls'" (click)="clearCallLog()">
       Clear call log
     </ion-item>
     <ion-item lines="none" (click)="settings()">

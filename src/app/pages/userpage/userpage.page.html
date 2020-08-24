@@ -8,12 +8,15 @@
 </ion-header>
 
 <ion-content>
+  <ion-searchbar [(ngModel)]="term" placeholder="Search people"></ion-searchbar>
 
-  <ion-list *ngFor="let account of accounts">
-    <ion-item style="background-color:transparent !important; padding-left:0 !important; margin-left:0 !important;" (click)="chat(account.userId)">
-      <ion-avatar>
+
+  <ion-list *ngFor="let account of accounts | filter:term">
+    <ion-item style="background-color:transparent !important; padding-left:0 !important; margin-left:0 !important;"
+      (click)="chat(account.userId)">
+      <div class="profileimage">
         <img src="{{account.img}}" />
-      </ion-avatar>
+      </div>
       <ion-label style="font-weight: 600; padding-left: 10px;">
         <span style="font-size:16px; text-transform: capitalize;">
           {{account.nikeName}}

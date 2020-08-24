@@ -3,10 +3,11 @@ import { LoadingService } from './../../services/loading.service';
 import { AlertController, ToastController, NavController } from '@ionic/angular';
 import { DataService } from 'src/app/services/data.service';
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import * as firebase from 'firebase';
 import * as _ from 'lodash';
 import { AngularFireDatabase } from '@angular/fire/database';
+import { CallNumber } from '@ionic-native/call-number/ngx';
 
 
 @Component({
@@ -17,13 +18,11 @@ import { AngularFireDatabase } from '@angular/fire/database';
 export class ContactPage implements OnInit {
 
   userId: any;
-
   nikeName: any;
   phoneNumber: any;
   image: any;
   description: any;
   dateDec: any;
-
   isBlock;
   currentUserId
 
@@ -37,12 +36,19 @@ export class ContactPage implements OnInit {
     public userService: UserService,
     private toastController: ToastController,
     private navCtrl: NavController,
+    private callNumber: CallNumber,
+    private toast: ToastController,
+    private router: Router
   ) {
+    // get the userId has been pass
     this.userId = this.actRoute.snapshot.paramMap.get('userId')
+    // pass the current user have been using
     this.currentUserId = firebase.auth().currentUser.uid;
   }
 
+  //Initialize the App after loaded
   ngOnInit() {
+    // fetch the data info
     this.dataService.getCurrentUser(this.userId).valueChanges().subscribe((user) => {
       this.nikeName = user.nikeName;
       this.phoneNumber = user.phoneNumber;
@@ -53,15 +59,19 @@ export class ContactPage implements OnInit {
         this.isBlock = _.findKey(blocks, block => {
           return block = firebase.auth().currentUser.uid;
         })
+        // if has been blocked pass the true condition 
         if (this.isBlock) {
           this.isBlock = true;
         } else {
+          // if not pass false condition
           this.isBlock = false;
         }
       })
     })
   }
 
+  //Report the user to the owner of the app..
+  // and else Block the user clear the caht messages
   async report() {
     const alert = await this.alertCtrl.create({
       header: 'Report this contact to WhatsApp from Pagas',
@@ -69,9 +79,7 @@ export class ContactPage implements OnInit {
       buttons: [
         {
           text: "CANCEL",
-          handler: () => {
-
-          }
+          handler: () => { }
         },
         {
           text: "REPORT",
@@ -89,18 +97,18 @@ export class ContactPage implements OnInit {
       ]
     })
     alert.present();
-
   }
+
+  // Block Function
   async block() {
+    // if not bloked will be present this methode
     if (!this.isBlock) {
       const alert = await this.alertCtrl.create({
         message: "Block" + this.nikeName + "Blocked contacts will no longer be able to call you or send messages.",
         buttons: [
           {
             text: "CANCEL",
-            handler: () => {
-
-            }
+            handler: () => { }
           },
           {
             text: "BLOCK",
@@ -112,8 +120,8 @@ export class ContactPage implements OnInit {
       })
       alert.present();
     }
-
   }
+  // present the toast notification
   async presentToast() {
     const toast = await this.toastController.create({
       message: 'Report sent and' + this.nikeName + 'has been blocked',
@@ -123,24 +131,34 @@ export class ContactPage implements OnInit {
     toast.present();
   }
 
+  // unBlock the User
   unBlock() {
+    //loading Show
     this.loading.show()
     this.userService.unblock(this.currentUserId, this.userId).then(() => {
+      //loading hide
       this.loading.hide();
     })
   }
 
+  // Block the User
   blockUser() {
+    // loading show
     this.loading.show()
     this.userService.block(this.currentUserId, this.userId).then(() => {
+      //loading hide
       this.loading.hide();
     })
   }
 
+  //Delete the chat conversation
   async deleteChat() {
+    // loading show
     this.loading.show();
     await this.afDB.database.ref('messages').child(firebase.auth().currentUser.uid).child(this.userId).remove().then(() => {
+      // and also the conversation
       this.deleteConversation();
+      //loading hide
       this.loading.hide();
     })
   }
@@ -155,8 +173,47 @@ export class ContactPage implements OnInit {
     })
   }
 
+  //pop back
   back() {
     this.navCtrl.pop()
   }
+
+  // make dial call
+  calls() {
+    this.callNumber.callNumber(`${this.phoneNumber}`, true).then(() => {
+      this.afDB.list('/accounts/' + firebase.auth().currentUser.uid + '/call/').push({
+        date: new Date().toString(),
+        userId: this.userId,
+        type: 'calling',
+        icon: 'call',
+        call: 'call'
+      }).then(() => {
+        this.afDB.list('/accounts/' + this.userId + '/call/').push({
+          date: new Date().toString(),
+          userId: firebase.auth().currentUser.uid,
+          type: 'calling',
+          icon: 'call',
+          call: 'misscall'
+        })
+      })
+      // if something goes wrong toast will handle the case
+    }).catch(err => this.something());
+  }
+
+  //toast notification
+  async something() {
+    const toast = await this.toast.create({
+      message: 'Something going wrong.',
+      duration: 2000
+    });
+    toast.present();
+  }
+
+
+  // make video calls
+  videoCall() {
+    this.router.navigate(["/calling", { 'image': this.image, 'name': this.nikeName, 'userId': this.userId }])
+  }
+
 
 }

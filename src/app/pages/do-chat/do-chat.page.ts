@@ -1,6 +1,6 @@
 import { UserService } from './../../services/user.service';
 import { DataService } from './../../services/data.service';
-import { PopoverController, IonContent, ToastController, ActionSheetController } from '@ionic/angular';
+import { PopoverController, IonContent, ToastController, ActionSheetController, AlertController } from '@ionic/angular';
 import { ChatmoreComponent } from './../../component/chatmore/chatmore.component';
 import { Component, OnInit, ViewChild, NgZone } from '@angular/core';
 import { AngularFireObject, AngularFireDatabase, AngularFireList } from '@angular/fire/database';
@@ -15,6 +15,13 @@ import { finalize } from 'rxjs/operators';
 import { AngularFireStorage } from '@angular/fire/storage';
 import { Media, MediaObject } from '@ionic-native/media/ngx';
 import { File } from '@ionic-native/file/ngx';
+import { FileChooser } from '@ionic-native/file-chooser/ngx';
+import { Base64 } from '@ionic-native/base64/ngx';
+import { StreamingMedia, StreamingVideoOptions, StreamingAudioOptions } from '@ionic-native/streaming-media/ngx';
+import { FilePath } from '@ionic-native/file-path/ngx';
+import { NativeAudio } from '@ionic-native/native-audio/ngx';
+import { CallNumber } from '@ionic-native/call-number/ngx';
+
 
 
 
@@ -27,6 +34,7 @@ export class DoChatPage implements OnInit {
 
   list: AngularFireList<any>;
 
+  playAudio = false;
 
   message: any;
   userId: any;
@@ -40,6 +48,7 @@ export class DoChatPage implements OnInit {
   status: any;
   isOnline: any;
   lastSeen: any;
+  calling = true;
   currentUsername;
   sender: any;
   isBlock;
@@ -47,39 +56,47 @@ export class DoChatPage implements OnInit {
   me: any;
   currentUserId;
   isLoading = true;
+  phoneNumber: any;
   recording = false;
-  private groupPhotoOption: CameraOptions;
+  private chatPhotoOption: CameraOptions;
 
-  // message: string = "";
-  // date: any;
-  // conversation: any;
-  // user: any;
+
   statusRecord: string;
   audioFile: MediaObject;
 
   constructor(
+    private fileChooser: FileChooser,
     private popoverController: PopoverController,
     public dataService: DataService,
     private camera: Camera,
     public eventService: EventService,
     public router: Router,
+    private nativeAudio: NativeAudio,
+    private streamingMedia: StreamingMedia,
     public chatService: ChatService,
     private actRoute: ActivatedRoute,
     public ngZone: NgZone,
+    private base64: Base64,
+    private callNumber: CallNumber,
     private toast: ToastController,
     private afDB: AngularFireDatabase,
     private file: File,
+    private filePath: FilePath,
     private media: Media,
     private afstorage: AngularFireStorage,
+    private alertController: AlertController,
     private actionSheet: ActionSheetController,
     public loading: LoadingService,
     public userService: UserService,
   ) {
-    this.audioFile = this.media.create(this.file.externalRootDirectory + '/audioRec.mp3')
+    // load sound effect fro the message sent
+    this.nativeAudio.preloadSimple('send', 'assets/audio/send.wav');
 
+    // set the current userId pass to veriable 
     this.currentUserId = firebase.auth().currentUser.uid;
-    // this.readMessage()
-    this.groupPhotoOption = {
+
+    // option for the photo::: it handle thw quality of the image
+    this.chatPhotoOption = {
       quality: 100,
       targetHeight: 530,
       targetWidth: 530,
@@ -98,6 +115,8 @@ export class DoChatPage implements OnInit {
     this.eventService.subscribe('messages', () => {
       this.messagesToShow = [];
       this.ngZone.run(() => {
+        this.readMessage();
+        this.readMessageSender();
         this.messagesToShow = this.chatService.buddymessages;
         this.isLoading = false;
       })
@@ -105,18 +124,19 @@ export class DoChatPage implements OnInit {
   }
 
 
-
   ngOnInit() {
+    //Initialize the enterise of the app
 
+    // Load the, if there is any unread message make it to read message
     this.readMessage();
-
-
+    // get conversation equal to the userId has been pass,
+    // this part may handle for view message and unread
     this.afDB.database.ref('conversations').child(firebase.auth().currentUser.uid).orderByChild('userId').equalTo(this.userId).once("value", snap => {
+      // make to the object values
       let me = snap.val();
       this.me = me.me;
-      console.log("dataMe", me)
     });
-
+    // read the sender Message
     this.readMessageSender()
     // let invoke the user database from the firebase 
     // this will fet the data from the firebase
@@ -126,17 +146,22 @@ export class DoChatPage implements OnInit {
       this.isOnline = user.status;
       this.image = user.img;
       this.status = user.status;
+      this.phoneNumber = user.phoneNumber;
       this.userId = user.userId;
       this.dataService.userBock(firebase.auth().currentUser.uid).valueChanges().subscribe((blocks) => {
         this.isBlock = _.findKey(blocks, block => {
           return block = firebase.auth().currentUser.uid;
         })
+        // Block the user condition
+        // if the condition is true,
+        // you can send any things else
         if (this.isBlock) {
           this.isBlock = true;
         } else {
           this.isBlock = false;
         }
       })
+      // this part handle for the current user 
       this.dataService.userBocks(firebase.auth().currentUser.uid).valueChanges().subscribe((blocks) => {
         this.blocks = _.findKey(blocks, block => {
           return block = this.userId;
@@ -150,53 +175,60 @@ export class DoChatPage implements OnInit {
     })
   }
 
+  //when message send scroll to the bottom
   scroll() {
     setTimeout(() => {
       this.scrollToBottom()
     }, 10)
   }
+
   // Update messagesRead when user lefts this page.
   ionViewWillLeave() {
-    // this.interstitial();
     this.eventService.destroy('chat:received');
   }
-
+  // load the chat conversation methode
   ionViewDidLeave() {
-    // this.interstitial();
+    // load this from event Service provider
     this.eventService.subscribe('messages', () => { });
+    // update the read and unread message
     this.readMessage();
+    // read the sender mesages
     this.readMessageSender();
-
   }
 
+  //When enter the pages first load the chat and 
   ionViewDidEnter() {
-    // this.readMessage()
     this.readMessageSender();
     this.chatService.getMessage(this.userId);
+    // after loaded scroll to the bottom 
     setTimeout(() => {
       this.scrollToBottom()
     }, 500)
-    //  console.log('scrollBottom2');
   }
 
   readMessage() {
+    // this is an Object 
     var updateRead = {
       read: 'read'
     }
+    // this handle find the user equal to the userId
     this.afDB.database.ref('conversations').child(firebase.auth().currentUser.uid).orderByChild('userId').equalTo(this.userId).once("value", snap => {
+      //make it object Values
       var res = snap.val();
+      // Obejct fine the key
       let key = Object.keys(res)
       this.afDB.database.ref('conversations').child(firebase.auth().currentUser.uid).child(key[0]).once("value", value => {
         let me = value.val();
-        console.log("dataMe", me.me)
         if (me.me == 'you') {
           this.afDB.database.ref('conversations').child(firebase.auth().currentUser.uid).orderByChild('userId').equalTo(this.userId).once('value', snapshot => {
             var res = snapshot.val();
             if (res != null) {
               let key = Object.keys(res)
+              // if the user is unread message make to read Message,,
               this.afDB.database.ref('conversations').child(firebase.auth().currentUser.uid).child(key[0]).update({ read: 'read' })
             }
           }).then(() => {
+            // then pass ot the current user
             this.afDB.database.ref('conversations').child(this.userId).orderByChild('userId').equalTo(firebase.auth().currentUser.uid).once('value', snapshot => {
               var res = snapshot.val();
               if (res != null) {
@@ -240,7 +272,6 @@ export class DoChatPage implements OnInit {
       if (res != null) {
         let key = Object.keys(res)
         for (let i = 0; i < key.length; i++) {
-          // console.log(key[i])
           this.afDB.database.ref('messages').child(this.userId).child(firebase.auth().currentUser.uid).child(key[i]).update(updateRead)
         }
       }
@@ -250,7 +281,6 @@ export class DoChatPage implements OnInit {
         if (res != null) {
           let key = Object.keys(res)
           for (let i = 0; i < key.length; i++) {
-            // console.log(key[i])
             this.afDB.database.ref('messages').child(firebase.auth().currentUser.uid).child(this.userId).child(key[i]).update(updateRead)
           }
         }
@@ -259,6 +289,7 @@ export class DoChatPage implements OnInit {
 
   }
 
+  // animation when typing user
   animateMessage(message) {
     setTimeout(() => {
       var tick = message.querySelector('.tick');
@@ -266,6 +297,8 @@ export class DoChatPage implements OnInit {
     }, 500);
   }
 
+  // more option from do-chat pages
+  // the popOver view the component from component 
   async more(ev: any) {
     const popover = await this.popoverController.create({
       component: ChatmoreComponent,
@@ -276,20 +309,32 @@ export class DoChatPage implements OnInit {
     });
     return await popover.present();
   }
+  // router pass ot the contact page alone with the userId
+  viewcontact() {
+    this.router.navigate(['/contact', { 'userId': this.userId }])
+  }
 
+  // handle a send message to User
+  // if it has been blocked, it can't send message
   sendMessage() {
+    // the condition methode for blocked
     if (this.isBlock) {
+      // if is true the actionSheet will present
       this.actionUnblock()
     } else {
+      // if not blocked it allow to send message to user
       this.sendNewMessage(this.message).then(() => {
+        // when send is completed then scroll to the bottom
         setTimeout(() => {
           this.scrollToBottom()
         }, 10)
+        // aslo clear the message box
         this.message = '';
       })
     }
   }
 
+  //send the photo to the user, is and choosen methode 
   async sendPhoto() {
     const alert = await this.actionSheet.create({
       header: "Send Photo  Message",
@@ -327,6 +372,7 @@ export class DoChatPage implements OnInit {
     alert.present();
   }
 
+  // delete option weather delete from every one or from you, alone with key of message 
   async optionDelete(key) {
     const alert = await this.actionSheet.create({
       header: 'Delete Message from ' + this.nikeName,
@@ -348,12 +394,11 @@ export class DoChatPage implements OnInit {
           handler: () => {
           }
         },
-
       ]
-
     })
     await alert.present();
   }
+  // this function handle the delete from me message // alone with key of message able delete
   async optionDeleteForMe(key) {
     const alert = await this.actionSheet.create({
       header: 'Delete Message from ' + this.nikeName,
@@ -380,6 +425,7 @@ export class DoChatPage implements OnInit {
   sendNewMessage(message) {
     if (this.userId) {
       var promise = new Promise((resolve, reject) => {
+        // is an object // able send message
         var messages = {
           date: new Date().toString(),
           userId: firebase.auth().currentUser.uid,
@@ -387,22 +433,28 @@ export class DoChatPage implements OnInit {
           message: message,
           read: 'unread',
         };
+        //send to coversation
         var conversation = {
           userId: this.userId,
           me: "me",
+          view: 'chat',
           message: message,
           type: 'text',
           read: 'unread',
           date: new Date().toString(),
         }
+
+        //send to coversation
         var convasation = {
           userId: firebase.auth().currentUser.uid,
           message: message,
           me: "you",
           type: 'text',
+          view: 'chat',
           read: 'unread',
           date: new Date().toString(),
         }
+        // sedn the message
         this.afDB.database.ref('/messages').child(firebase.auth().currentUser.uid).child(this.userId).push(messages).then((snap) => {
           var keys = snap.key;
           snap.update({
@@ -477,13 +529,16 @@ export class DoChatPage implements OnInit {
               reject(err);
             })
           })
+        }).then(() => {
+          // after send message is completed play the sound
+          this.nativeAudio.play('send')
         })
       })
       return promise;
     }
   }
 
-  //send message to user
+  //send message photo to user alone with url of photo
   sendNewPhoto(url) {
     if (this.userId) {
       var promise = new Promise((resolve, reject) => {
@@ -499,6 +554,7 @@ export class DoChatPage implements OnInit {
           message: url,
           me: "me",
           type: 'image',
+          view: 'chat',
           date: new Date().toString(),
           read: 'unread',
         }
@@ -506,6 +562,7 @@ export class DoChatPage implements OnInit {
           userId: firebase.auth().currentUser.uid,
           message: url,
           me: "you",
+          view: 'chat',
           date: new Date().toString(),
           type: 'image',
           read: 'unread',
@@ -584,12 +641,15 @@ export class DoChatPage implements OnInit {
             })
           })
 
+        }).then(() => {
+          // play the when completed send
+          this.nativeAudio.play('send')
         })
       })
       return promise;
     }
   }
-
+  // send audio message to user alone with thw url of the audio
   sendNewAudio(url) {
     if (this.userId) {
       var promise = new Promise((resolve, reject) => {
@@ -597,21 +657,23 @@ export class DoChatPage implements OnInit {
           date: new Date().toString(),
           userId: firebase.auth().currentUser.uid,
           type: 'audio',
-          message: url,
+          audio: url,
           read: 'unread',
         };
         var conversation = {
           userId: this.userId,
-          message: url,
+          audio: url,
           type: 'audio',
           me: "me",
+          view: 'chat',
           date: new Date().toString(),
           read: 'unread',
         }
         var convasation = {
           userId: firebase.auth().currentUser.uid,
-          message: url,
+          audio: url,
           me: "you",
+          view: 'chat',
           date: new Date().toString(),
           type: 'audio',
           read: 'unread',
@@ -652,12 +714,10 @@ export class DoChatPage implements OnInit {
                             resolve(true);
                           })
                         }
-
                       }).catch((err) => {
                         reject(err);
                       })
                     })
-
                   }).catch((err) => {
                     reject(err);
                   })
@@ -689,30 +749,50 @@ export class DoChatPage implements OnInit {
               })
             })
           })
-
+        }).then(() => {
+          this.nativeAudio.play('send')
         })
       })
       return promise;
     }
   }
 
+  //play voice from the database
+  play(audioUrl) {
+    let options: StreamingAudioOptions = {
+      successCallback: () => { },
+      errorCallback: (e) => { this.presentToast() },
+      initFullscreen: false
+    };
+    // the streaming media hanlde the audio URL convert to native audio play
+    this.streamingMedia.playAudio(`${audioUrl}`, options);
+  }
 
+  // toast present to notify for something going wrong
+  async presentToast() {
+    const toast = await this.toast.create({
+      message: 'Something going wrong.',
+      duration: 1000
+    });
+    toast.present();
+  }
+  // scroll to the bottom
   scrollToBottom() {
     this.IonContent.scrollToBottom(100)
   }
-
   // this handle the upload to the firebase 
   // it handle the selection from the image after will be upload to firebase storage 
   // also will be return the download url
   uploadPhotoMessage(sourceType) {
     return new Promise((resolve, reject) => {
-      this.groupPhotoOption.sourceType = sourceType;
-      this.camera.getPicture(this.groupPhotoOption).then((imageData) => {
+      this.chatPhotoOption.sourceType = sourceType;
+      this.camera.getPicture(this.chatPhotoOption).then((imageData) => {
         let url = "data:image/jpeg;base64," + imageData;
         let imgBlob = this.imgURItoBlob(url);
         let metadata = {
           'contentType': imgBlob.type
         };
+        alert(url)
         this.loading.showPro();
         const ref = this.afstorage.ref('/Messaging/' + firebase.auth().currentUser.uid + this.generateFilename())
         const task = ref.put(imgBlob, metadata)
@@ -727,59 +807,55 @@ export class DoChatPage implements OnInit {
       })
     })
   }
-
-  // get audio file recorded
-  getRocordfile() {
-    var promise = new promise((resolve, reject) => {
-
-      resolve(true)
+  // this handle the record the voice modern
+  record() {
+    // then create a new file to store the audio
+    this.audioFile = this.media.create(this.file.externalDataDirectory + `${this.userId}.mp3`);
+    // then  start the recorde
+    this.audioFile.startRecord()
+    // this.statusRecord = "Recording..."
+    this.recording = true;
+  }
+  stopRec() {
+    // stop the record
+    this.audioFile.stopRecord()
+    // this.statusRecord = "Stopped..."
+    this.recording = false;
+    //uplaod to firebase storage
+    this.uploadRec().then((url) => {
+      // pass url to the send maessage
+      this.sendNewAudio(url)
     })
-    return promise;
   }
 
   // upload the recording voice to firebase
+  // it handle the selection from the audio after will be upload to firebase storage 
+  // also will be return the download url
   uploadRec() {
-    return new Promise((resolve, reject) => {
-      const audioBlob = this.audioFile.getCurrentPosition()
-      alert(audioBlob)
-      // const fileName = this.file.applicationDirectory + '/audioRec.mp3'
-      // let audioBlob = fileName;
+    return new Promise((resolve) => {
       const metadata = {
         contentType: 'audio/mp3',
       };
-      this.loading.showPro();
-      const ref = this.afstorage.ref('/audio/' + firebase.auth().currentUser.uid + this.generateFilename())
-      const task = ref.put(audioBlob, metadata)
-      task.snapshotChanges().pipe(
-        finalize(async () => {
-          ref.getDownloadURL().subscribe((audioUrl) => {
-            resolve(audioUrl);
-            this.loading.hidePro();
+      let fileName = `${this.userId}.mp3`
+      this.file.readAsDataURL(this.file.externalDataDirectory, fileName).then((file) => {
+        this.loading.showPro();
+        const ref = this.afstorage.ref('/audio/' + '/chat/' + this.generateFilenameAudio())
+        const task = ref.putString(file, firebase.storage.StringFormat.DATA_URL)
+        task.snapshotChanges().pipe(
+          finalize(async () => {
+            ref.getDownloadURL().subscribe((audioUrl) => {
+              resolve(audioUrl);
+              this.loading.hidePro();
+              // after uploaded completed,,:: then delete from the delete local storage
+              this.file.removeFile(this.file.externalDataDirectory, fileName);
+            })
           })
-        })
-      ).subscribe()
+        ).subscribe()
+      })
     })
   }
 
-  record() {
-    var promise = new promise((resolve, rejetc) => {
-      this.audioFile.startRecord()
-      resolve(true);
-      this.statusRecord = "Recording..."
-      this.recording = true;
-    })
-    return promise;
-
-  }
-  stopRec() {
-    this.audioFile.stopRecord()
-    this.statusRecord = "Stopped..."
-    this.recording = false;
-    this.uploadRec().then((audioUrl) => {
-      this.sendNewAudio(audioUrl)
-    })
-  }
-
+  // generate the random Name return to the jpg
   generateFilename() {
     var length = 8;
     var text = "";
@@ -790,6 +866,18 @@ export class DoChatPage implements OnInit {
     return text + ".jpg";
   }
 
+  // generate the random Name return to the mp3
+  generateFilenameAudio() {
+    var length = 4;
+    var text = "";
+    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    for (var i = 0; i < length; i++) {
+      text += possible.charAt(Math.floor(Math.random() * possible.length));
+    }
+    return text + ".mp3";
+  }
+
+  // reduce the quality of the image using Blob convert to data
   imgURItoBlob(dataURI) {
     var binary = atob(dataURI.split(',')[1]);
     var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
@@ -801,6 +889,7 @@ export class DoChatPage implements OnInit {
       type: mimeString
     });
   }
+
   // this handle for the conversation delete for only user
   deleteForMe(key) {
     this.loading.show();
@@ -831,14 +920,17 @@ export class DoChatPage implements OnInit {
     })
   }
 
+  // route to the view info page
   viewInfo() {
     this.router.navigate(['/user-info', { 'userId': this.userId }])
   }
+  //enlarge the image
   enlargeImage(image) {
     this.router.navigate(['enlarge-image/', { 'image': image }])
-
   }
+  // option to block the user
   async option() {
+    // if is already block make to unblock
     if (this.isBlock == true) {
       const actionShet = await this.actionSheet.create({
         header: 'Select option',
@@ -862,6 +954,7 @@ export class DoChatPage implements OnInit {
         ]
       })
       actionShet.present();
+      // if is not block make to block the user
     } else if (!this.isBlock) {
       const actionShet = await this.actionSheet.create({
         header: 'Select option',
@@ -886,15 +979,16 @@ export class DoChatPage implements OnInit {
       })
       actionShet.present();
     }
-
-
   }
+
+  // user Block Function
   blockUser() {
     this.loading.show()
     this.userService.block(this.currentUserId, this.userId).then(() => {
       this.loading.hide();
     })
   }
+  // User UnBlock Funtion
   unblockUser() {
     this.loading.show()
     this.userService.unblock(this.currentUserId, this.userId).then(() => {
@@ -902,6 +996,7 @@ export class DoChatPage implements OnInit {
     })
   }
 
+  // Send Message option
   sendMessageOption() {
     if (!this.isBlock) {
       this.toastBlock();
@@ -934,6 +1029,7 @@ export class DoChatPage implements OnInit {
     block.present();
   }
 
+  // message option to unblock the user
   async actionUnblock() {
     const actionShet = await this.actionSheet.create({
       header: 'Unblock ' + this.nikeName + ' to send a message.',
@@ -955,6 +1051,7 @@ export class DoChatPage implements OnInit {
     actionShet.present();
   }
 
+  // for the photo option to unblock
   async sendPhotoOption() {
     const actionShet = await this.actionSheet.create({
       header: 'Unblock ' + this.nikeName + ' to send a photo.',
@@ -968,12 +1065,46 @@ export class DoChatPage implements OnInit {
         {
           text: 'Cancel',
           handler: () => {
-
           }
         }
       ]
     })
     actionShet.present();
 
+  }
+
+  //route to the video call
+  videoCall() {
+    this.router.navigate(["/calling", { 'image': this.image, 'name': this.nikeName, 'userId': this.userId }])
+  }
+
+  //dial call
+  callPhoneNumber() {
+    this.callNumber.callNumber(`${this.phoneNumber}`, true).then(() => {
+      this.afDB.list('/accounts/' + firebase.auth().currentUser.uid + '/call/').push({
+        date: new Date().toString(),
+        userId: this.userId,
+        type: 'calling',
+        icon: 'call',
+        call: 'call'
+      }).then(() => {
+        this.afDB.list('/accounts/' + this.userId + '/call/').push({
+          date: new Date().toString(),
+          userId: firebase.auth().currentUser.uid,
+          type: 'calling',
+          icon: 'call',
+          call: 'misscall'
+        })
+      })
+    }).catch(err => this.something());
+  }
+
+  // if somthing goes wrong toast will handle the function
+  async something() {
+    const toast = await this.toast.create({
+      message: 'Something going wrong.',
+      duration: 2000
+    });
+    toast.present();
   }
 }

@@ -1,5 +1,8 @@
 import { ToastController } from '@ionic/angular';
 import { Component, OnInit } from '@angular/core';
+import { StatusBar } from '@ionic-native/status-bar/ngx';
+import { Platform } from '@ionic/angular';
+
 
 @Component({
   selector: 'app-chatsetting',
@@ -8,32 +11,40 @@ import { Component, OnInit } from '@angular/core';
 })
 export class ChatsettingPage implements OnInit {
 
-
   darkMode: any = true;
 
 
   constructor(
-    private toast: ToastController
+    private toast: ToastController,
+    private platform: Platform,
+    private statusBar: StatusBar
   ) { }
 
   ngOnInit() {
     this.darkMode = false;
-
   }
 
+  // this handle the themes toogel changing to default to dark mode
   cambio() {
     if (this.darkMode = !this.darkMode) {
-      // const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
       document.body.classList.toggle('dark');
+      // pass to the local stoage 
       window.localStorage.setItem('dark', this.darkMode);
       let get = window.localStorage.getItem('dark')
-      // console.log("get", get)
+      this.platform.ready().then(() => {
+        // then intialize the statusBar to the black
+        this.statusBar.styleBlackTranslucent();
+      })
     } else {
-      // document.body.classList.toggle('dark');
+      //clear the local storage
       window.localStorage.clear()
+      //remove the local storage
       window.localStorage.removeItem('dark');
+      this.platform.ready().then(() => {
+        // then intialize the statusBar to the default one
+        this.statusBar.backgroundColorByHexString('#054D44');
+      })
       let get = window.localStorage.getItem('dark')
-      // console.log("clear", get)
     }
   }
 

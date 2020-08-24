@@ -17,16 +17,17 @@ import { Validators, FormGroup, FormBuilder, FormControl } from '@angular/forms'
 })
 export class NewgroupPage implements OnInit {
 
-  public group: any;
+  public group = <any>{};
 
   searchUser: any;
   accounts: any;
   account: any;
   currentUserId: any;
-  public groupMembers = [];
+  groupMembers = [];
   processe = false;
   groupName: any;
   public formGroup: FormGroup;
+  createName: any;
 
 
 
@@ -89,16 +90,11 @@ export class NewgroupPage implements OnInit {
     this.searchUser = "";
     this.dataService.getUsers().valueChanges().subscribe((accounts) => {
       this.accounts = accounts;
-
-
       this.dataService.getCurrentUser(firebase.auth().currentUser.uid).valueChanges().subscribe((account) => {
-        this.groupMembers = [account]
+        this.groupMembers = [account];
+        this.createName = account.nikeName;
         //add own userId as excludedIds.
         this.account = account;
-        //   console.log("current User", account)
-        //  if (this.excludedIds.indexOf(account.userId) == -1) {
-        //    this.excludedIds.push(account.userId);
-        //  }
       })
     })
   }
@@ -131,14 +127,14 @@ export class NewgroupPage implements OnInit {
   }
 
   //Add friend to member of groups
-  addToGroup(friend) {
-    this.groupMembers.push(friend)
+  addToGroup(account) {
+    this.groupMembers.push(account)
   }
   // Remove friend from members of group.
-  removeFromGroup(friend) {
+  removeFromGroup(account) {
     var index = -1;
     for (var i = 1; i < this.groupMembers.length; i++) {
-      if (this.groupMembers[i].userId == friend.userId) {
+      if (this.groupMembers[i].userId == account.userId) {
         index = i;
       }
     }
@@ -150,7 +146,7 @@ export class NewgroupPage implements OnInit {
 
   // set the image to group photo 
   setImageCamera() {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       this.camera.getPicture(this.groupPhotoOptionCamera).then((url) => {
         this.group = "data:image/jpeg;base64," + url;
         resolve(true)
@@ -158,7 +154,7 @@ export class NewgroupPage implements OnInit {
     })
   }
   setImageGallery() {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       this.camera.getPicture(this.groupPhotoOptionGallery).then((url) => {
         this.group = "data:image/jpeg;base64," + url;
         resolve(true)
@@ -214,7 +210,7 @@ export class NewgroupPage implements OnInit {
         date: new Date().toString(),
         userId: firebase.auth().currentUser.uid,
         type: 'system',
-        message: 'This group has been created.',
+        message: 'This group has been created by "' + this.createName + '".',
         icon: 'chatbubbles'
       });
       // Add members of the group
@@ -233,15 +229,21 @@ export class NewgroupPage implements OnInit {
       }
       this.group.name = this.formGroup.value["name"];
       this.group.admin = [firebase.auth().currentUser.uid];
+      this.group.createdBy = this.createName;
 
       // Lets add to firebase database
       this.angularDb.list('/groups/').push(this.group).then((success) => {
         var groupId = success.key;
+        //update the key
+        success.update({
+          key: groupId
+        });
         var conversation = {
           key: groupId,
           me: "me",
           // message: 'This group has been created.',
-          type: 'group',
+          type: 'text',
+          view: 'group',
           // read: 'unread',
           date: new Date().toString(),
         }
@@ -249,34 +251,19 @@ export class NewgroupPage implements OnInit {
           key: groupId,
           // message: 'This group has been created.',
           me: "you",
-          type: 'group',
+          type: 'text',
+          view: 'group',
           // read: 'unread',
           date: new Date().toString(),
         }
-        //update the key
-        success.update({
-          key: groupId
-        });
+        //add group referenceuser to user;
         for (let i = 0; i < this.groupMembers.length; i++) {
-          // this.angularDb.database.ref('conversations').child(this.groupMembers[0].userId).push(conversation).then(() => {
-          this.angularDb.database.ref('conversations').child(this.groupMembers[i].userId).orderByChild('key').equalTo(groupId).once('value', snapshot => {
-            var res = snapshot.val();
-            if (res != null) {
-              let store = Object.keys(res)
-              this.angularDb.database.ref('conversations').child(this.groupMembers[i].userId).child(store[0]).remove().then(() => {
-                this.angularDb.database.ref('conversations').child(this.groupMembers[i].userId).push(convasation).then(() => {
-                  resolve(true);
-                })
-              }).catch((err) => {
-                reject(err);
-              })
-            } else {
-              this.angularDb.database.ref('conversations').child(this.groupMembers[i].userId).push(convasation).then(() => {
-                resolve(true);
-              })
-            }
-          }).catch((err) => {
-            reject(err);
+          this.angularDb.object('/accounts/' + this.groupMembers[i].userId + '/groups/' + groupId).update({
+            messagesRead: 1,
+            key: groupId
+          });
+          this.angularDb.database.ref('conversations').child(this.groupMembers[i].userId).push(convasation).then(() => {
+            resolve(true);
           }).then(() => {
             this.showToast('Your groups has been created')
             this.loading.hide();
@@ -287,8 +274,6 @@ export class NewgroupPage implements OnInit {
       })
     })
     return promise;
-
-
   }
 
 

@@ -2,28 +2,7 @@ ion-fab {
     bottom: 20px !important;
     right: 15px !important;
 }
-.scroll-content {
-    padding-top: 0px !important;
-    margin-bottom: 0px !important;
-}
-
-.fa-rotate-45 {
-    -webkit-transform: rotate(45deg);
-    -moz-transform: rotate(45deg);
-    -ms-transform: rotate(45deg);
-    -o-transform: rotate(45deg);
-    transform: rotate(45deg);
-}
-.fa-rotate-135 {
-    -webkit-transform: rotate(225deg);
-    -moz-transform: rotate(225deg);
-    -ms-transform: rotate(225deg);
-    -o-transform: rotate(225deg);
-    transform: rotate(225deg);
-}
-.bigIcon {
-    font-size: 2.2em !important;
-}
+//  for the prfile page handle 
 div.profileimageViewed {
     padding: 3px;
     display: flex;
@@ -33,6 +12,24 @@ div.profileimageViewed {
     border-radius: 100%;
     img {
         height: 50px;
+        width: 58px;
         border-radius: 100%;
     }
+}
+
+ion-icon.icons{
+    font-size: xx-large;
+}
+
+.top-video{
+    position: absolute;
+    top: 100px;
+    right: 100px;
+    max-width: 100px;
+    z-index: 2;
+}
+
+.main-video{
+    width: 100%;
+    max-height: 70%;
 }

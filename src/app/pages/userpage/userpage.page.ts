@@ -18,6 +18,8 @@ export class UserpagePage implements OnInit {
   account: any;
   currentUserId: any;
 
+  term = '';
+
   constructor(
     public loading: LoadingService,
     public dataService: DataService,
@@ -38,7 +40,6 @@ export class UserpagePage implements OnInit {
         //add own userId as excludedIds.
         this.excludedIds = [];
         this.account = account;
-        //   console.log("current User", account)
         if (this.excludedIds.indexOf(account.userId) == -1) {
           this.excludedIds.push(account.userId);
         }
@@ -47,9 +48,11 @@ export class UserpagePage implements OnInit {
   }
 
   chat(userId) {
+    // if it's is current user navigate to profile
     if (userId === this.currentUserId) {
       this.router.navigateByUrl("/profile")
     } else {
+      // else Not chat Page
       this.router.navigate(['/do-chat', { 'userId': userId }])
     }
   }

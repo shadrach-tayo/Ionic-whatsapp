@@ -33,16 +33,21 @@ export class ChatmoreComponent implements OnInit {
     public afDB: AngularFireDatabase,
 
   ) {
+    // get userId from pass parameter
     this.userId = this.navParams.get("userId")
+    //invoke the current firebase ID for UserID
     this.currentUserId = firebase.auth().currentUser.uid;
     // console.log(this.userId)
   }
 
   ngOnInit() {
+    // fetch the database from firebase 
     this.dataService.getCurrentUser(this.userId).valueChanges().subscribe((user) => {
       this.nikeName = user.nikeName;
     })
 
+    // get the data,
+    // to handle the block methode
     this.dataService.getUser(this.userId).valueChanges().subscribe((user) => {
       this.dataService.userBock(firebase.auth().currentUser.uid).valueChanges().subscribe((blocks) => {
         this.isBlock = _.findKey(blocks, block => {
@@ -58,26 +63,37 @@ export class ChatmoreComponent implements OnInit {
 
   }
 
+  // will be close the popOver controller
   eventFromPopover() {
     this.popoverController.dismiss();
   }
 
   unBlock() {
+    // show loading service
     this.loading.show()
+    // get block methode from firebase fetch
     this.userService.unblock(this.currentUserId, this.userId).then(() => {
+      //hide the loading service
       this.loading.hide();
+      // will be close the popOver controller
       this.eventFromPopover()
     })
   }
 
+  // to the block the user funtion
   block() {
+    // show loading service
     this.loading.show()
     this.userService.block(this.currentUserId, this.userId).then(() => {
+      //hide the loading service
       this.loading.hide();
+      // will be close the popOver controller
       this.eventFromPopover();
     })
   }
 
+  // report the user contact to owner 
+  // this methode is an alertController
   async report() {
     const alert = await this.alertCtrl.create({
       header: 'Report this contact to WhatsApp from Pagas',
@@ -108,6 +124,7 @@ export class ChatmoreComponent implements OnInit {
 
   }
 
+  // this funttion handle the delete chat from firebase 
   async deleteChat() {
     this.loading.show();
     this.eventFromPopover();
@@ -128,6 +145,7 @@ export class ChatmoreComponent implements OnInit {
     })
   }
 
+  // if something goes wrong, will toast handle
   async presentToast() {
     const toast = await this.toastController.create({
       message: 'Report sent and' + this.nikeName + 'has been blocked',
@@ -137,6 +155,7 @@ export class ChatmoreComponent implements OnInit {
     toast.present();
   }
 
+  // this navigate to the contact page.....
   contacts() {
     this.router.navigate(['/contact', { 'userId': this.userId }])
     this.eventFromPopover();

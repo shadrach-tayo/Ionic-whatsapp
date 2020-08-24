@@ -1,3 +1,4 @@
+import { StatusService } from './../../services/status.service';
 import { SettingComponent } from './../../component/setting/setting.component';
 import { CameraPage } from './../camera/camera.page';
 import { CallPage } from './../call/call.page';
@@ -9,6 +10,8 @@ import { IonNav, PopoverController } from '@ionic/angular';
 import { SuperTabChangeEventDetail } from '@ionic-super-tabs/core';
 import { SuperTabs } from '@ionic-super-tabs/angular';
 import { ScrollHideConfig } from '../../directives/header-scroll.directive';
+import { Network } from '@ionic-native/network/ngx';
+import firebase from 'firebase';
 
 
 @Component({
@@ -17,7 +20,7 @@ import { ScrollHideConfig } from '../../directives/header-scroll.directive';
   styleUrls: ['./home.page.scss'],
 })
 export class HomePage implements OnInit {
-  
+
   @ViewChild('superTabs', { static: false }) st: SuperTabs;
 
   activeTabIndex: number;
@@ -33,12 +36,32 @@ export class HomePage implements OnInit {
   calls: any = CallPage;
 
   constructor(
-    private popoverController: PopoverController
+    private popoverController: PopoverController,
+    private network: Network,
+    private statusService: StatusService
   ) {
+    // calling the connetion to invoke 
+    this.connection();
 
   }
 
   ngOnInit() {
+
+  }
+  // set the connection when the data offline   
+  connection() {
+    let disconnectSubscription = this.network.onDisconnect().subscribe(() => {
+      this.statusService.offlineStatusLog();
+    });
+    disconnectSubscription.unsubscribe
+    let connectSubscription = this.network.onConnect().subscribe(() => {
+      this.statusService.onlineStatus();
+      setTimeout(() => {
+        if (this.network.type === 'wifi') {
+        }
+      }, 3000);
+    });
+    connectSubscription.unsubscribe();
   }
 
   async showPopover(ev: any) {
@@ -52,9 +75,10 @@ export class HomePage implements OnInit {
     return await popover.present();
   }
 
+  // this handle the swipebale tab
   onTabChange(ev: CustomEvent<SuperTabChangeEventDetail>) {
     this.activeTabIndex = ev.detail.index;
-  
+
     switch (this.activeTabIndex) {
       case 0:
         this.tabs = 'camera'
